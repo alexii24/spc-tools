@@ -62,3 +62,63 @@ def fit_segment_coeffs(x, y, segment):
     log_y = np.log10(y[mask])
     n, b = np.polyfit(log_x, log_y, deg=1)
     return float(n), float(b)
+
+
+
+    def plot_power_curve(
+    ids,
+    powers,
+    label,
+    power_scale=1.0,
+    color="blue",
+    fill_color=None,
+    fill_alpha=0.12,
+    path_template="/content/data1/Spectrum_(LS6)-2026_11_22-ID_{ID}.spc",
+    normalize=True,
+    draw=True,
+    ax=None,
+):
+"""Строит график зависимости максимальной интенсивности от мощности"""
+    powers = [p * power_scale for p in powers]
+
+    x_powers = []
+    y_peaks = []
+
+    for sid, pwr in zip(ids, powers):
+        try:
+            spectrum = spc.File(path_template.format(ID=sid))
+            y = np.asarray(spectrum.sub[0].y, dtype=float)
+            if y.size == 0:
+                continue
+            #y = y - np.amin(y)
+            y = subtract_dark(y, n_points=50)
+
+            x_powers.append(pwr)
+            y_peaks.append(np.max(y))
+        except FileNotFoundError:
+            print(f"Файл для ID={sid} не найден, пропускаю.")
+
+    x_arr = np.asarray(x_powers, dtype=float)
+    y_arr = np.asarray(y_peaks, dtype=float)
+
+    if y_arr.size == 0:
+        print(f"Нет данных для построения графика ({label}).")
+        return None, None
+
+    if normalize:
+        max_val = np.max(y_arr)
+        if max_val != 0:
+            y_arr = y_arr / max_val
+
+    if draw:
+        if ax is None:
+            ax = plt.gca()
+
+        line_color = color
+        area_color = fill_color if fill_color is not None else color
+
+        ax.plot(x_arr, y_arr, color=line_color, label=label)
+        ax.fill_between(x_arr, y_arr, color=area_color, alpha=fill_alpha)
+        ax.scatter(x_arr, y_arr, color=line_color)
+
+    return x_arr, y_arr
