@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spc-tools"
+version = "0.1.0"
+description = "Tools for .spc files analysis"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=2.0",
+    "matplotlib",
+]
+
+[tool.setuptools]
+py-modules = ["spc_tools"]
